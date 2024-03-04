@@ -1,14 +1,16 @@
+
+
 %% Okrajove podminky
-p=101325;
-ro = 101325;
-T = 288.15;
-M = 1.5;
-kappa = 1.4;
+press=101325;
+ro = 1.225;
+T = 273.15;
+Mach = 1.6;
+kappa = 1.41;
 
 error = 10^(-6)
 
 %% Uhel nabehu
-AoA = [5]
+AoA = [3]
 chord = 1.42;
 
 %% Geometrie profilu
@@ -17,8 +19,8 @@ chord = 1.42;
 
 %Náběžná hrana a odtoková hrana jsou definovány jako [0,0] a [1,0]
 
-top_surface_X = [0.65];
-top_surface_Y = [0.3];
+top_surface_X = [(1.42-0.65)/1.42];
+top_surface_Y = [0.08/1.42];
 
 bottom_surface_X = [];
 bottom_surface_Y = [];
@@ -39,17 +41,32 @@ bottom_airfoil = transformAirfoil(bottom_airfoil, AoA,chord);
 
 
 
-delta = getAngles(AoA,top_airfoil,bottom_airfoil)
+delta = deg2rad(getAngles(AoA,top_airfoil,bottom_airfoil))
+p(1,1) = press
+p(2,1) = press
+M(1,1) = Mach
+M(2,1) = Mach
 
-
-for i = 2:length(top_airfoil(1,:))
+for i = 1:length(top_airfoil(1,:))-1
     if delta(1,i)>0
-        [p(i), M(i)] = solveCompression(delta(1,i),M,p,kappa)
+        [p(1,i+1), M(1,i+1)] = solveCompression(delta(1,i),M(1,i),p(1,i),kappa)
     elseif delta(1,i)<0
-        [p(i), M(i)] = solveExpansion(delta(1,i),M,p,kappa)
+        [p(1,i+1), M(1,i+1)] = solveExpansion(abs(delta(1,i)),M(1,i),p(1,i),kappa)
     else
-        p(i)=p(i-1)
-        M(i)=M(i-1)
+        p(1,i+1)=p(1,i)
+        M(1,i+1)=M(1,i)
+
+    end
+for i = 1:length(bottom_airfoil(1,:))-1
+
+    if delta(2,i)<0
+        [p(2,i+1), M(2,i+1)] = solveCompression(abs(delta(2,i)),M(2,i),p(2,i),kappa)
+    elseif delta(2,i)>0
+        [p(2,i+1), M(2,i+1)] = solveExpansion(abs(delta(2,i)),M(2,i),p(2,i),kappa)
+    else
+        p(2,i+1)=p(2,i)
+        M(2,i+1)=M(2,i)
+    end
 
 
 
@@ -114,7 +131,8 @@ function [pressure, mach] = solveExpansion(d,M,p,kappa)
 a=1;
 b=3;
 delta_i=1
-error=10^-3;
+error=10^-5;
+
 v1=((kappa+1)/(kappa-1))^(1/2)*atan(((kappa-1)/(kappa+1)*(M^2-1))^(1/2))-atan((M^2-1)^(1/2));
 v2=v1+d;
 while abs(delta_i)>error
@@ -137,10 +155,11 @@ pressure = ((1+(kappa-1)/2*M^2)/(1+(kappa-1)/2*mach^2))^(kappa/(kappa-1))*p;
 end
 
 function [pressure, mach] = solveCompression(d,M,p,kappa)
+disp("RV")
 a=deg2rad(30);
 b=deg2rad(70);
 delta_i=1;
-error=10^-3;
+error=10^-6;
 while abs(delta_i)>error
 
     sigma_help=(a+b)/2
@@ -149,8 +168,10 @@ while abs(delta_i)>error
     delta_i=(fun_sigma-d)/d;
     if delta_i<0
         a=sigma_help;
+        rad2deg(sigma_help)
     else
         b=sigma_help;
+        rad2deg(sigma_help)
     end
   
        
