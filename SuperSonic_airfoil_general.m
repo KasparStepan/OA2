@@ -10,7 +10,7 @@ kappa = 1.41;
 error = 10^(-6)
 
 %% Uhel nabehu
-AoA = [3]
+AoA = [0]
 chord = 1.42;
 
 %% Geometrie profilu
@@ -41,7 +41,7 @@ bottom_airfoil = transformAirfoil(bottom_airfoil, AoA,chord);
 
 
 
-delta = deg2rad(getAngles(AoA,top_airfoil,bottom_airfoil))
+[delta,normal] = getAngles(AoA,top_airfoil,bottom_airfoil)
 p(1,1) = press
 p(2,1) = press
 M(1,1) = Mach
@@ -76,6 +76,17 @@ end
 
 
 
+    
+
+
+plot(top_airfoil(1,:),top_airfoil(2,:))
+hold on
+plot(bottom_airfoil(1,:),bottom_airfoil(2,:))
+axis equal;
+grid on;
+
+[L,D] = solveForce(p,normal, top_airfoil, bottom_airfoil)
+
 
 
 
@@ -101,27 +112,29 @@ function [validation] = geometry_Validation(TA,BA)
     end
 end
 
-function [direction] = getAngles(AoA, TA, BA)
+function [delta, normal] = getAngles(AoA, TA, BA)
 disp(TA)
 disp(BA)
     for i = 1:(length(TA)-1)
         if i>1
-            direction(1,i) =  rad2deg(atan((TA(2,i+1)-TA(2,i))/(TA(1,i+1)-TA(1,i)))) -direction(1,i-1)
-            disp("dir2")
+            delta(1,i) =  atan((TA(2,i+1)-TA(2,i))/(TA(1,i+1)-TA(1,i))) -delta(1,i-1)
             
         else
-            direction(1,i) =  rad2deg(atan((TA(2,i+1)-TA(2,i))/(TA(1,i+1)-TA(1,i))))
-            disp("dir1")
+            delta(1,i) =  atan((TA(2,i+1)-TA(2,i))/(TA(1,i+1)-TA(1,i)))
         end
+        normal(1,i) = atan((TA(2,i+1)-TA(2,i))/(TA(1,i+1)-TA(1,i)))
 
     end
 
     for j = 1:(length(BA)-1)
         if j>1
-            direction(2,j) = rad2deg(atan((BA(2,j+1)-BA(2,j))/(BA(1,j+1)-BA(1,j)))-direction(2,j))
+            delta(2,j) = atan((BA(2,j+1)-BA(2,j))/(BA(1,j+1)-BA(1,j))-delta(2,j))
+            
         else
-            direction(2,j) = rad2deg(atan((BA(2,j+1)-BA(2,j))/(BA(1,j+1)-BA(1,j))))
+            delta(2,j) = atan((BA(2,j+1)-BA(2,j))/(BA(1,j+1)-BA(1,j)))
+           
         end
+        normal(2,j) = atan((BA(2,j+1)-BA(2,j))/(BA(1,j+1)-BA(1,j)))
 
     end
 end
@@ -183,17 +196,25 @@ mach = (((kappa-1)*M^2*sin(sigma_help)^2+2)/(2*kappa*M^2*(sin(sigma_help))^2-(ka
 
 end
 
-function [L,D] = solveForce(p,direction, Pstart, Pend, surface)
-length = sqrt((Pend(1)-Pstart(1))^2+(Pend(2)-Pstart(2))^2);
+function [L,D] = solveForce(p,direction, coordinates_top, coordinates_bottom)
 
-if surface == "top"
-    L= p*length*cos(direction)
-    D = p*length*sin(dirextio)
-elseif surface == "bottom"
-    L= -1*p*length*cos(direction)
-    D = p*length*sin(dirextio)
-
+L_top=[]
+D_top=[]
+L_bottom=[]
+D_bottom=[]
+for i = 1: length(coordinates_top(1,:))-1
+    edge_length = sqrt((coordinates_top(1,i+1)-coordinates_top(1,i))^2+(coordinates_top(2,i+1)-coordinates_top(2,i))^2);
+    L_top(i)= -1*p(1,i+1)*edge_length*cos(direction(1,i))
+    D_top(i) = p(1,i+1)*edge_length*sin(direction(1,i))
+end    
+for j = 1: length(coordinates_bottom(1,:))-1
+    edge_length = sqrt((coordinates_bottom(1,j+1)-coordinates_bottom(1,j))^2+(coordinates_bottom(2,j+1)-coordinates_bottom(2,j))^2);
+    L_bottom(j)= 1*p(2,j+1)*edge_length*cos(direction(2,j))
+    D_bottom(j) = p(2,j+1)*edge_length*sin(direction(2,j))
 end
+
+L = sum(L_top)+sum(L_bottom);
+D = sum(D_top)+sum(D_bottom);
 
 end
 
