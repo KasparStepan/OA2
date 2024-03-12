@@ -236,3 +236,28 @@ elseif type == "moment"
     coefficient=2*force/(ro*v^2*dimension^2);
 end
 end
+
+
+function [L,D] = solveLinearTheory(AoA, M, TA, BA)
+
+for i=1:length(AoA)
+
+cll(i) = 4*deg2rad(AoA(i))/((M^2-1)^(1/2));
+cdl(i) = 4*deg2rad(AoA(j))^2/((M^2-1)^(1/2))
+cml(i) = -4*deg2rad(AoA(j))/((M^2-1)^(1/2))*(1/2-x0/c)
+
+for j=1:length(TA(1,:))-1
+
+    cdl(i) = cdl(i)+2/((M^2-1)^(1/2))*(((TA(2,j+1)-TA(2,j))/(TA(1,j+1)-TA(1,j)))^2*(TA(2,j+1)-TA(2,j))/(TA(1,1)-TA(1,end)));
+    cml(i) = cml(i)+2/((M^2-1)^(1/2))*(((TA(2,j+1)-TA(2,j))/(TA(1,j+1)-TA(1,j)))^2*(TA(2,j+1)-TA(2,j))/(TA(1,1)-TA(1,end)));
+
+end
+
+for j=1:length(BA(1,:))-1
+
+    cdl(i) = cdl(i)+2/((M^2-1)^(1/2))*(((BA(2,j+1)-BA(2,j))/(BA(1,j+1)-BA(1,j)))^2*(BA(2,j+1)-BA(2,j))/(BA(1,1)-BA(1,end)));
+
+end
+end
+
+end
