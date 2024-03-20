@@ -112,19 +112,22 @@ if geometry_Validation(top_airfoil_base,bottom_airfoil_base) == true
 end
 
 subplot(3,1,1)
-plot(AoA,Cl)
+plot(AoA,Cl,AoA,cll)
 grid on
 title("Vztlaková čára")
+legend("Nelinearizovaná teorie","Linearizovaná teorie")
 
 subplot(3,1,2)
-plot(AoA,Cd)
+plot(AoA,Cd,AoA,cdl)
 grid on
 title("Odporová čára")
+legend("Nelinearizovaná teorie","Linearizovaná teorie")
 
 subplot(3,1,3)
 plot(Cd,Cl)
 grid on
 title("Aerodynamická polára")
+
 
 
 
